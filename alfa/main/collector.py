@@ -14,7 +14,7 @@ from datetime import datetime
 
 import pandas as pd
 from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+from google.oauth2.service_account import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import Resource, build
 
@@ -31,15 +31,14 @@ token_path = os.path.join(
     internals["project"]["dirs"]["configs"], internals["project"]["files"]["token"]
 )
 
+
 DATA_DIR = internals["project"]["dirs"]["data"]
 
 creds_instructions = """
  === Missing "config/credentials.json" ===
 1. Go to https://console.developers.google.com/cloud-resource-manager
 2. Create a project
-3. Go to https://console.developers.google.com/apis/dashboard and choose "Credentials", then "Oauth Client ID"
-4. Select "web application" as application type
-5. copy the resulting credentials to config/credentials.json 
+3. Use service account credentials
 """
 
 
@@ -83,22 +82,15 @@ class Collector:
 
     def get_credentials(self):
         creds = False
-        if os.path.exists(token_path):
-            creds = Credentials.from_authorized_user_file(token_path)
 
-        if not creds or not creds.valid:
-            if not os.path.exists(creds_path):
-                print(creds_instructions)
-                raise ValueError("missing config/credentials.json")
-            if creds and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    creds_path, self.SCOPES
+        if os.path.exists(creds_path):
+            creds = Credentials.from_service_account_file(
+                creds_path,
+                scopes=config['scopes']
+                ).with_subject(
+                config['delegated']['account']
                 )
-                creds = flow.run_local_server(port=PORT)
-            with open(token_path, "w") as token:
-                token.write(creds.to_json())
+
         return creds
 
     def connect_api(self):

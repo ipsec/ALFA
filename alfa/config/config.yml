@@ -50,3 +50,6 @@ kill_chain:
   index_reducer: max # max / min / mean. Some events have multiple categories. This is the reducer used to assign a single value to the event.
   max_slack_width: 5 # how "long" the slack line can be
   max_slack_depth: 7 # how "low" the slack line can hang
+
+delegated:
+  account: admin_here@yourdomain.com
